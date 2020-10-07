@@ -1,0 +1,100 @@
+apply plugin: 'com.android.application'
+apply plugin: 'kotlin-android'
+apply plugin: 'kotlin-android-extensions'
+apply plugin: 'kotlin-kapt'
+
+android {
+    def globalConfiguration = rootProject.ext
+
+    compileSdkVersion globalConfiguration.androidCompileSdkVersion
+    defaultConfig {
+        minSdkVersion globalConfiguration.androidMinSdkVersion
+        targetSdkVersion globalConfiguration.androidTargetSdkVersion
+
+        versionCode globalConfiguration.androidVersionCode
+        versionName globalConfiguration.androidVersionName
+
+        testInstrumentationRunner globalConfiguration["testInstrumentationRunner"]
+        vectorDrawables.useSupportLibrary = true
+
+        javaCompileOptions {
+            annotationProcessorOptions {
+                arguments << ["dagger.gradle.incremental": "true"]
+                arguments = ["room.incremental":"true"]
+            }
+        }
+    }
+    buildTypes {
+        debug {
+            minifyEnabled false
+            shrinkResources false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        }
+
+        release {
+            minifyEnabled true
+            shrinkResources true
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        }
+    }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+
+    kotlinOptions {
+        jvmTarget = JavaVersion.VERSION_1_8
+    }
+
+    preBuild.doLast {
+        //Copy project git-hook to .git/hooks
+        copy {
+            from "../git-hooks"
+            into "../.git/hooks"
+        }
+        FileTree tree = fileTree('../.git/hooks')
+        tree.each {
+            Runtime.getRuntime().exec("chmod +x ../.git/hooks/${it.name}")
+        }
+    }
+}
+
+dependencies {
+
+    def presentationDependencies = rootProject.ext.presentationDependencies
+    def presentationTestDependencies = rootProject.ext.presentationTestDependencies
+
+    implementation project(':domain')
+    api project(':data')
+
+    implementation presentationDependencies.fragment
+
+    implementation presentationDependencies.kotlin
+    implementation presentationDependencies.kotlinAnko
+    implementation presentationDependencies.kotlinKtx
+
+    implementation presentationDependencies.lifecycleExtensions
+    implementation presentationDependencies.lifecycleLivedata
+    implementation presentationDependencies.lifecycleViewmodel
+    implementation presentationDependencies.dagger
+    implementation presentationDependencies.cicerone
+    implementation presentationDependencies.timber
+
+
+    kapt presentationDependencies.daggerCompiler
+
+    implementation presentationDependencies.supportAndroid
+    implementation presentationDependencies.supportAppCompat
+    implementation presentationDependencies.supportDesign
+    implementation presentationDependencies.cardView
+    implementation presentationDependencies.recyclerView
+    implementation presentationDependencies.constraintLayout
+
+    debugImplementation presentationDependencies.leakcanary
+
+    testImplementation presentationTestDependencies.junit
+    testImplementation presentationTestDependencies.mockito
+
+    androidTestImplementation presentationTestDependencies.espresso
+    androidTestImplementation presentationTestDependencies.testingSupportLib
+}

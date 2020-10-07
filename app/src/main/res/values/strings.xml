@@ -1,0 +1,9 @@
+<resources>
+    <string name="app_name">Film Viewer</string>
+
+    <string name="search">Search</string>
+    <string name="signOut">Logout</string>
+
+    <string name="toast_exit_app_warning_text">Click again to exit</string>
+
+</resources>
