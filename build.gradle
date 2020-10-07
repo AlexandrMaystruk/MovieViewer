@@ -157,8 +157,14 @@ ext {
     //https://mvnrepository.com/artifact/com.squareup.retrofit2/retrofit
     retrofitVersion = '2.9.0'
 
-    //https://mvnrepository.com/artifact/com.google.code.gson/gson
-    gsonVersion = '2.8.6'
+    //https://mvnrepository.com/artifact/com.squareup.retrofit2/converter-gson
+    gsonVersion = '2.9.0'
+
+    //https://github.com/JakeWharton/retrofit2-kotlin-coroutines-adapter
+    reptofitCoroutinesVersion = '0.9.2'
+
+    //https://github.com/hdodenhof/CircleImageView
+    circleImageViewVersion = '3.1.0'
 
     //LeakCanary version
     leakCanaryVersion = '2.4'
@@ -174,6 +180,9 @@ ext {
     mockitoKotlinVersion = '2.1.0'
     espressoVersion = '3.2.0'
     testingSupportLibVersion = '1.2.0'
+
+    manifestPlaceholders = [usesCleartextTraffic:"true"]
+
 
     presentationDependencies = [
             kotlin             : "org.jetbrains.kotlin:kotlin-stdlib-jdk8:${kotlin_version}",
@@ -198,6 +207,7 @@ ext {
             lifecycleLivedata  : "androidx.lifecycle:lifecycle-livedata-ktx:$livedataVersion",
             lifecycleViewmodel : "androidx.lifecycle:lifecycle-viewmodel-ktx:$lifecycleVersion",
 
+            circleImageView     : "de.hdodenhof:circleimageview:${circleImageViewVersion}",
             timber             : "com.jakewharton.timber:timber:${timberVersion}"
     ]
 
@@ -233,7 +243,8 @@ ext {
             corutinesAndroid: "org.jetbrains.kotlinx:kotlinx-coroutines-android:${coroutinesVersion}",
             timber          : "com.jakewharton.timber:timber:${timberVersion}",
             retrofit        : "com.squareup.retrofit2:retrofit:${retrofitVersion}",
-            gson            : "com.google.code.gson:gson:${gsonVersion}"
+            gson            : "com.squareup.retrofit2:converter-gson:${gsonVersion}",
+            reptofitCorutines: "com.jakewharton.retrofit:retrofit2-kotlin-coroutines-adapter:${reptofitCoroutinesVersion}"
     ]
 
     dataTestDependencies = [

@@ -39,7 +39,7 @@
     <item name="dialog_height" format="float" type="dimen">0.5</item>
 
     <dimen name="itemBigHeight">130dp</dimen>
-    <dimen name="iItemSmallHeight">95dp</dimen>
+    <dimen name="iItemSmallHeight">120dp</dimen>
 
     <dimen name="transition_s">4dp</dimen>
     <dimen name="transition_m">8dp</dimen>

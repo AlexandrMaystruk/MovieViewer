@@ -11,8 +11,6 @@ import javax.inject.Inject
 
 abstract class BaseFragment(private val layout: Int? = null) : Fragment() {
 
-    var toolbarManager: ToolbarManager? = null
-
     @Inject
     lateinit var viewModeFactory: DaggerViewModelFactory
 
@@ -25,15 +23,17 @@ abstract class BaseFragment(private val layout: Int? = null) : Fragment() {
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View? {
-        return layout?.let { inflater.inflate(layout, container, false) }
-    }
+    ): View? = layout?.let { inflater.inflate(layout, container, false) }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         bindViewModel()
-        toolbarManager = ToolbarManager(initToolbar(), view).apply { prepareToolbar() }
         initViews()
+    }
+
+    override fun onStart() {
+        (activity as? BaseActivity)?.configToolbar(initToolbar())
+        super.onStart()
     }
 
     protected abstract fun injectDependencies(): Unit?
@@ -43,11 +43,6 @@ abstract class BaseFragment(private val layout: Int? = null) : Fragment() {
     protected abstract fun bindViewModel(): Unit?
 
     protected open fun initViews() {}
-
-    override fun onDestroyView() {
-        toolbarManager = null
-        super.onDestroyView()
-    }
 
     protected abstract fun clearInjectedComponent(): Unit?
 

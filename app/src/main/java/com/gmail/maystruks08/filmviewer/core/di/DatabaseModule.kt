@@ -3,8 +3,7 @@ package com.gmail.maystruks08.filmviewer.core.di
 import android.content.Context
 import androidx.room.Room
 import com.gmail.maystruks08.data.local.AppDatabase
-import com.gmail.maystruks08.data.local.dao.DefaultDao
-import com.google.gson.Gson
+import com.gmail.maystruks08.data.local.dao.MovieDao
 import dagger.Module
 import dagger.Provides
 import javax.inject.Singleton
@@ -20,7 +19,7 @@ object DatabaseModule {
     @JvmStatic
     @Provides
     @Singleton
-    fun defaultDao(appDatabase: AppDatabase): DefaultDao = appDatabase.defaultDao()
+    fun defaultDao(appDatabase: AppDatabase): MovieDao = appDatabase.defaultDao()
 
 
 }

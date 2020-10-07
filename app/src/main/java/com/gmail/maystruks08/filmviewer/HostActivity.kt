@@ -1,40 +1,33 @@
 package com.gmail.maystruks08.filmviewer
 
-import android.content.Context
+import android.Manifest
+import android.content.pm.PackageManager
+import android.os.Build
 import android.os.Bundle
-import android.view.View
-import android.view.inputmethod.InputMethodManager
-import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
-import androidx.appcompat.app.AppCompatActivity
-import androidx.fragment.app.Fragment
-import androidx.fragment.app.FragmentTransaction
 import com.gmail.maystruks08.domain.util.NetworkUtil
-import com.gmail.maystruks08.filmviewer.core.di.viewmodel.DaggerViewModelFactory
+import com.gmail.maystruks08.filmviewer.core.base.BaseActivity
+import com.gmail.maystruks08.filmviewer.core.base.FragmentToolbar
+import com.gmail.maystruks08.filmviewer.core.ext.getFragment
 import com.gmail.maystruks08.filmviewer.core.ext.injectViewModel
-import com.gmail.maystruks08.filmviewer.core.navigation.AppNavigator
+import com.gmail.maystruks08.filmviewer.core.ext.transaction
+import com.gmail.maystruks08.filmviewer.ui.description.MovieDescriptionFragment
+import com.gmail.maystruks08.filmviewer.ui.movielist.MovieListFragment
 import com.google.android.material.snackbar.Snackbar
 import kotlinx.android.synthetic.main.activity_host.*
-import ru.terrakok.cicerone.Navigator
-import ru.terrakok.cicerone.NavigatorHolder
-import ru.terrakok.cicerone.commands.Command
+import timber.log.Timber
 import javax.inject.Inject
 
 const val PRESS_TWICE_INTERVAL = 2000
 
-class HostActivity : AppCompatActivity() {
-
-    @Inject
-    lateinit var navigatorHolder: NavigatorHolder
+class HostActivity : BaseActivity(R.layout.activity_host), MovieListFragment.Listener,
+    MovieDescriptionFragment.Listener {
 
     @Inject
     lateinit var networkUtil: NetworkUtil
 
-    @Inject
-    lateinit var viewModeFactory: DaggerViewModelFactory
-
-    lateinit var viewModel: HostViewModel
+    private lateinit var viewModel: HostViewModel
 
     private var lastBackPressTime = 0L
 
@@ -44,48 +37,79 @@ class HostActivity : AppCompatActivity() {
 
     private var toast: Toast? = null
 
-    private val navigator: Navigator =
-        object : AppNavigator(this, supportFragmentManager, R.id.nav_host_container) {
-            override fun setupFragmentTransaction(
-                command: Command?,
-                currentFragment: Fragment?,
-                nextFragment: Fragment?,
-                fragmentTransaction: FragmentTransaction
-            ) {
-                fragmentTransaction.setReorderingAllowed(true)
+    override fun injectDependencies() {
+        App.hostComponent?.inject(this)
+        viewModel = injectViewModel(viewModeFactory)
+    }
+
+    override fun initToolbar(): FragmentToolbar = FragmentToolbar.Builder()
+        .withId(R.id.toolbar)
+        .withTitle(R.string.app_name)
+        .build()
+
+    override fun bindViewModel() {
+
+    }
+
+    override fun initViews() {
+        fragment_container?.let {
+            supportFragmentManager.transaction {
+                val movieListFragment = MovieListFragment.getInstance()
+                return@transaction add(R.id.fragment_container, movieListFragment)
             }
         }
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         setTheme(R.style.AppTheme)
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_host)
-        App.hostComponent?.inject(this)
+        requestPermission()
+    }
 
-        viewModel = injectViewModel(viewModeFactory)
-
-        networkUtil.subscribeToConnectionChange(this.javaClass.simpleName) { isConnected ->
-            if (!isConnected) {
-                snackBar = Snackbar.make(
-                    nav_host_container,
-                    "Snack bar text",
-                    Snackbar.LENGTH_INDEFINITE
-                )
-                snackBar?.view?.findViewById<TextView>(com.google.android.material.R.id.snackbar_text)
-                    ?.apply {
-                        isSingleLine = false
-                        textAlignment = View.TEXT_ALIGNMENT_CENTER
-                    }
-                snackBar?.show()
-            } else {
-                snackBar?.dismiss()
-            }
+    private fun requestPermission() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            requestPermissions(
+                arrayOf(Manifest.permission.WRITE_EXTERNAL_STORAGE),
+                REQUEST_WRITE_PERMISSION
+            )
         }
+    }
+
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<out String>,
+        grantResults: IntArray
+    ) {
+        if (requestCode == REQUEST_WRITE_PERMISSION && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+            Timber.e("PERMISSIONS onRequestPermissionsResult true")
+        }
+    }
+
+    override fun onMovieSelected(movieId: Int) {
+        val fragment = getFragment<MovieDescriptionFragment>(DESCRIPTION_TAG)
+        if (fragment_container != null && fragment == null) {
+            supportFragmentManager.transaction {
+                val movieDescriptionFragment = MovieDescriptionFragment.getInstance(movieId)
+                return@transaction replace(R.id.fragment_container, movieDescriptionFragment)
+            }
+        } else {
+            fragment?.refreshUI(movieId)
+        }
+    }
+
+    override fun onBackClicked() {
+        onBackPressed()
     }
 
     override fun onBackPressed() {
         this.hideSoftKeyboard()
         this.navigateBack()
+        fragment_container?.let {
+            supportFragmentManager.transaction {
+                val movieListFragment = MovieListFragment.getInstance()
+                return@transaction replace(R.id.fragment_container, movieListFragment)
+            }
+        }
     }
 
     private fun navigateBack() {
@@ -104,22 +128,8 @@ class HostActivity : AppCompatActivity() {
         }
     }
 
-    private fun hideSoftKeyboard() {
-        if (currentFocus != null) {
-            val inputMethodManager =
-                getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
-            inputMethodManager.hideSoftInputFromWindow(currentFocus?.windowToken, 0)
-        }
-    }
-
-    override fun onResume() {
-        super.onResume()
-        navigatorHolder.setNavigator(navigator)
-    }
-
     override fun onPause() {
         super.onPause()
-        navigatorHolder.removeNavigator()
         alertDialog?.dismiss()
         this.hideSoftKeyboard()
     }
@@ -137,5 +147,13 @@ class HostActivity : AppCompatActivity() {
         snackBar = null
         App.clearHostComponent()
         super.onDestroy()
+    }
+
+    companion object {
+
+        private const val REQUEST_WRITE_PERMISSION = 786
+
+
+        private const val DESCRIPTION_TAG = "DESCRIPTION"
     }
 }

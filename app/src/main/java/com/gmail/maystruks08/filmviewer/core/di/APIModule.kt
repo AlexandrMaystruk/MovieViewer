@@ -1,35 +1,34 @@
 package com.gmail.maystruks08.filmviewer.core.di
 
-import com.gmail.maystruks08.data.local.AppDatabase
-import com.gmail.maystruks08.data.local.dao.DefaultDao
-import com.gmail.maystruks08.data.remote.DefaultApi
-import com.gmail.maystruks08.data.remote.DefaultApiImpl
+import com.gmail.maystruks08.data.remote.MovieApi
 import com.google.gson.Gson
-import dagger.Binds
+import com.google.gson.GsonBuilder
+import com.jakewharton.retrofit2.adapter.kotlin.coroutines.CoroutineCallAdapterFactory
 import dagger.Module
 import dagger.Provides
 import retrofit2.Retrofit
+import retrofit2.converter.gson.GsonConverterFactory
 import javax.inject.Singleton
 
 @Module
-abstract class APIModule {
-
-    @Binds
-    @Singleton
-    abstract fun provideDefaultApi(defaultApiImpl: DefaultApiImpl): DefaultApi
+object APIModule {
 
     @Provides
     @Singleton
-    fun defaultDao(appDatabase: AppDatabase): DefaultDao = appDatabase.defaultDao()
+    fun gson(): Gson = GsonBuilder()
+        .setLenient()
+        .create()
 
     @Provides
     @Singleton
-    fun gson(): Gson = Gson()
-
-    @Provides
-    @Singleton
-    fun retrofit(): Retrofit =  Retrofit.Builder()
+    fun retrofit(gson: Gson): Retrofit = Retrofit.Builder()
         .baseUrl("http://test.php-cd.attractgroup.com/")
+        .addConverterFactory(GsonConverterFactory.create(gson))
+        .addCallAdapterFactory(CoroutineCallAdapterFactory())
         .build()
+
+    @Provides
+    @Singleton
+    fun provideMovieApi(retrofit: Retrofit): MovieApi = retrofit.create(MovieApi::class.java)
 
 }

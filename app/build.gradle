@@ -77,8 +77,9 @@ dependencies {
     implementation presentationDependencies.lifecycleLivedata
     implementation presentationDependencies.lifecycleViewmodel
     implementation presentationDependencies.dagger
-    implementation presentationDependencies.cicerone
     implementation presentationDependencies.timber
+
+    implementation presentationDependencies.circleImageView
 
 
     kapt presentationDependencies.daggerCompiler
