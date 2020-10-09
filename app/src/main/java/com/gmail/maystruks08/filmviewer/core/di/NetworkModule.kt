@@ -1,7 +1,7 @@
 package com.gmail.maystruks08.filmviewer.core.di
 
-import com.gmail.maystruks08.data.FileHelperImpl
-import com.gmail.maystruks08.domain.repository.FileHelper
+import com.gmail.maystruks08.data.ImageLoaderImpl
+import com.gmail.maystruks08.domain.repository.ImageLoader
 import com.gmail.maystruks08.domain.util.NetworkUtil
 import com.gmail.maystruks08.filmviewer.utils.NetworkUtilImpl
 import dagger.Binds
@@ -17,6 +17,6 @@ abstract class NetworkModule {
 
     @Binds
     @Singleton
-    abstract fun provideFileHelper(fileHelperImpl: FileHelperImpl): FileHelper
+    abstract fun provideImageLoader(imageLoaderImpl: ImageLoaderImpl): ImageLoader
 
 }

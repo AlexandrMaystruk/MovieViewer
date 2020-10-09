@@ -4,74 +4,42 @@ import android.Manifest
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
+import android.view.View
 import android.widget.Toast
-import androidx.appcompat.app.AlertDialog
 import com.gmail.maystruks08.domain.util.NetworkUtil
 import com.gmail.maystruks08.filmviewer.core.base.BaseActivity
-import com.gmail.maystruks08.filmviewer.core.base.FragmentToolbar
-import com.gmail.maystruks08.filmviewer.core.ext.getFragment
-import com.gmail.maystruks08.filmviewer.core.ext.injectViewModel
 import com.gmail.maystruks08.filmviewer.core.ext.transaction
-import com.gmail.maystruks08.filmviewer.ui.description.MovieDescriptionFragment
+import com.gmail.maystruks08.filmviewer.ui.description.PagerMovieFragment
 import com.gmail.maystruks08.filmviewer.ui.movielist.MovieListFragment
 import com.google.android.material.snackbar.Snackbar
 import kotlinx.android.synthetic.main.activity_host.*
 import timber.log.Timber
 import javax.inject.Inject
 
-const val PRESS_TWICE_INTERVAL = 2000
-
-class HostActivity : BaseActivity(R.layout.activity_host), MovieListFragment.Listener,
-    MovieDescriptionFragment.Listener {
+class HostActivity : BaseActivity(R.layout.activity_host), MovieListFragment.Listener {
 
     @Inject
     lateinit var networkUtil: NetworkUtil
 
-    private lateinit var viewModel: HostViewModel
-
     private var lastBackPressTime = 0L
-
-    private var alertDialog: AlertDialog? = null
 
     private var snackBar: Snackbar? = null
 
     private var toast: Toast? = null
 
-    override fun injectDependencies() {
-        App.hostComponent?.inject(this)
-        viewModel = injectViewModel(viewModeFactory)
-    }
+    override fun inject() = App.hostComponent?.inject(this)
 
-    override fun initToolbar(): FragmentToolbar = FragmentToolbar.Builder()
-        .withId(R.id.toolbar)
-        .withTitle(R.string.app_name)
-        .build()
-
-    override fun bindViewModel() {
-
-    }
-
-    override fun initViews() {
-        fragment_container?.let {
-            supportFragmentManager.transaction {
-                val movieListFragment = MovieListFragment.getInstance()
-                return@transaction add(R.id.fragment_container, movieListFragment)
-            }
-        }
-    }
+    override fun initViews() = Unit
 
     override fun onCreate(savedInstanceState: Bundle?) {
         setTheme(R.style.AppTheme)
         super.onCreate(savedInstanceState)
         requestPermission()
-    }
-
-    private fun requestPermission() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            requestPermissions(
-                arrayOf(Manifest.permission.WRITE_EXTERNAL_STORAGE),
-                REQUEST_WRITE_PERMISSION
-            )
+        if (savedInstanceState == null) {
+            supportFragmentManager.transaction {
+                val movieListFragment = MovieListFragment.getInstance()
+                return@transaction add(R.id.fragment_container, movieListFragment)
+            }
         }
     }
 
@@ -85,57 +53,17 @@ class HostActivity : BaseActivity(R.layout.activity_host), MovieListFragment.Lis
         }
     }
 
-    override fun onMovieSelected(movieId: Int) {
-        val fragment = getFragment<MovieDescriptionFragment>(DESCRIPTION_TAG)
-        if (fragment_container != null && fragment == null) {
-            supportFragmentManager.transaction {
-                val movieDescriptionFragment = MovieDescriptionFragment.getInstance(movieId)
-                return@transaction replace(R.id.fragment_container, movieDescriptionFragment)
-            }
-        } else {
-            fragment?.refreshUI(movieId)
-        }
-    }
-
-    override fun onBackClicked() {
-        onBackPressed()
-    }
-
     override fun onBackPressed() {
         this.hideSoftKeyboard()
         this.navigateBack()
-        fragment_container?.let {
-            supportFragmentManager.transaction {
-                val movieListFragment = MovieListFragment.getInstance()
-                return@transaction replace(R.id.fragment_container, movieListFragment)
-            }
-        }
-    }
-
-    private fun navigateBack() {
-        when {
-            supportFragmentManager.backStackEntryCount > 0 -> viewModel.onExitClicked()
-            lastBackPressTime < System.currentTimeMillis() - PRESS_TWICE_INTERVAL -> {
-                toast = Toast.makeText(
-                    applicationContext,
-                    getString(R.string.toast_exit_app_warning_text),
-                    Toast.LENGTH_SHORT
-                )
-                toast?.show()
-                lastBackPressTime = System.currentTimeMillis()
-            }
-            else -> viewModel.onExitClicked()
-        }
     }
 
     override fun onPause() {
         super.onPause()
-        alertDialog?.dismiss()
         this.hideSoftKeyboard()
     }
 
     override fun onStop() {
-        toast?.cancel()
         networkUtil.unsubscribe(this.javaClass.simpleName)
         super.onStop()
     }
@@ -149,11 +77,52 @@ class HostActivity : BaseActivity(R.layout.activity_host), MovieListFragment.Lis
         super.onDestroy()
     }
 
+    override fun onMovieSelected(movieIds: List<Int>, moviePosition: Int, view: View) {
+        supportFragmentManager.transaction {
+            val movieDescriptionFragment = PagerMovieFragment.getInstance(movieIds, moviePosition)
+//            setReorderingAllowed(true)
+//            addSharedElement(view, view.transitionName)
+//            replace(R.id.fragment_container, movieDescriptionFragment, PagerMovieFragment::class.simpleName)
+//            addToBackStack(null)
+            replace(R.id.fragment_container, movieDescriptionFragment)
+            addToBackStack(DESCRIPTION_TAG)
+        }
+    }
+
+
+    private fun requestPermission() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            requestPermissions(
+                arrayOf(Manifest.permission.WRITE_EXTERNAL_STORAGE),
+                REQUEST_WRITE_PERMISSION
+            )
+        }
+    }
+
+    private fun navigateBack() {
+        fragment_container?.let {
+            when {
+                supportFragmentManager.backStackEntryCount > 0 -> supportFragmentManager.popBackStack()
+                lastBackPressTime < System.currentTimeMillis() - PRESS_TWICE_INTERVAL -> {
+                    toast = Toast.makeText(applicationContext, getString(R.string.toast_exit_app_warning_text), Toast.LENGTH_SHORT)
+                    toast?.show()
+                    lastBackPressTime = System.currentTimeMillis()
+                }
+                else -> finish()
+            }
+        }
+    }
+
+
+
     companion object {
+
+        private const val PRESS_TWICE_INTERVAL = 2000
 
         private const val REQUEST_WRITE_PERMISSION = 786
 
-
         private const val DESCRIPTION_TAG = "DESCRIPTION"
+
+        private const val MOVIE_LIST_TAG = "MOVIE_LIST"
     }
 }

@@ -1,21 +1,25 @@
 package com.gmail.maystruks08.filmviewer.ui.movielist
 
 import android.content.Context
+import android.view.View
 import android.widget.Toast
 import androidx.recyclerview.widget.LinearLayoutManager
-import com.gmail.maystruks08.domain.repository.FileHelper
+import com.gmail.maystruks08.domain.repository.ImageLoader
 import com.gmail.maystruks08.filmviewer.App
 import com.gmail.maystruks08.filmviewer.R
 import com.gmail.maystruks08.filmviewer.core.base.BaseFragment
-import com.gmail.maystruks08.filmviewer.core.base.FragmentToolbar
 import com.gmail.maystruks08.filmviewer.core.ext.injectViewModel
 import kotlinx.android.synthetic.main.fragment_movie_list.*
 import javax.inject.Inject
 
+
 class MovieListFragment : BaseFragment(R.layout.fragment_movie_list) {
 
     @Inject
-    lateinit var fileHelper: FileHelper
+    lateinit var imageLoader: ImageLoader
+
+    @Inject
+    lateinit var movieAnimator: MovieAnimator
 
     private lateinit var viewModel: MovieListViewModel
 
@@ -28,15 +32,10 @@ class MovieListFragment : BaseFragment(R.layout.fragment_movie_list) {
         callback = activity as? Listener
     }
 
-    override fun injectDependencies() {
+    override fun inject() {
         App.movieListComponent?.inject(this)
         viewModel = injectViewModel(viewModeFactory)
     }
-
-    override fun initToolbar() = FragmentToolbar.Builder()
-        .withId(R.id.toolbar)
-        .withTitle(R.string.app_name)
-        .build()
 
     override fun bindViewModel() {
         viewModel.movieViews.observe(viewLifecycleOwner, { movies ->
@@ -44,7 +43,7 @@ class MovieListFragment : BaseFragment(R.layout.fragment_movie_list) {
         })
 
         viewModel.progressBar.observe(viewLifecycleOwner, { needToShowProgress ->
-
+            if (needToShowProgress) showProgress() else hideProgress()
         })
 
         viewModel.toast.observe(viewLifecycleOwner, { message ->
@@ -53,8 +52,9 @@ class MovieListFragment : BaseFragment(R.layout.fragment_movie_list) {
     }
 
     override fun initViews() {
-        movieAdapter = MovieAdapter(fileHelper, viewLifecycleOwner, MovieDiffUtilCallback(), { movieId ->
-            callback?.onMovieSelected(movieId)
+        movieAnimator.setUpReturnTransition(this)
+        movieAdapter = MovieAdapter(imageLoader, viewLifecycleOwner, MovieDiffUtilCallback(), { moviePosition, view ->
+            callback?.onMovieSelected(movieAdapter.viewList.map { it.id }, moviePosition, view)
         })
         movieRecyclerView.apply {
             layoutManager = LinearLayoutManager(requireContext())
@@ -67,7 +67,7 @@ class MovieListFragment : BaseFragment(R.layout.fragment_movie_list) {
         super.onDestroyView()
     }
 
-    override fun clearInjectedComponent() = App.clearMovieListComponent()
+    override fun clearComponent() = App.clearMovieListComponent()
 
     override fun onDetach() {
         callback = null
@@ -76,7 +76,7 @@ class MovieListFragment : BaseFragment(R.layout.fragment_movie_list) {
 
     interface Listener {
 
-        fun onMovieSelected(movieId: Int)
+        fun onMovieSelected(movieIds: List<Int>, moviePosition: Int, view: View)
 
     }
 

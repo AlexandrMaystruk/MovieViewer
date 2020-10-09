@@ -2,8 +2,12 @@
     <string name="app_name">Film Viewer</string>
 
     <string name="search">Search</string>
-    <string name="signOut">Logout</string>
+
+    <string name="drawer_movie_list">Movie list</string>
+    <string name="drawer_movie_description">Movie description</string>
 
     <string name="toast_exit_app_warning_text">Click again to exit</string>
+
+    <string name="cdMoviePhoto" translatable="false">MoviePhoto</string>
 
 </resources>

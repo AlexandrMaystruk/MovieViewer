@@ -18,6 +18,7 @@ class MovieInteractorImpl @Inject constructor(
     @ExperimentalCoroutinesApi
     override suspend fun provideMovieList(): Flow<ResultOfTask<Exception, List<Movie>>> {
         return channelFlow {
+            this.offer(ResultOfTask.buildLoading())
             val cachedData = ResultOfTask.build { movieRepository.getMovieListFromCache() }
             this.offer(cachedData)
             val dataFomRemote = ResultOfTask.build { return@build updateCache() }

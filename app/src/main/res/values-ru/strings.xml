@@ -1,10 +1,12 @@
 <resources>
-    <string name="app_name">Run Tracker</string>
+    <string name="app_name">Film Viewer</string>
 
     <string name="search">Поиск</string>
-    <string name="signOut">Выйти</string>
 
-    <string name="toast_exit_app_warning_text">Click again to exit</string>
+    <string name="drawer_movie_list">Список фильмов</string>
+    <string name="drawer_movie_description">Описание фильма</string>
+
+    <string name="toast_exit_app_warning_text">Нажмите ещё раз для выхода</string>
 
 
 </resources>

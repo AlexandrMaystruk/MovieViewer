@@ -1,75 +1,54 @@
 package com.gmail.maystruks08.filmviewer.ui.description
 
-import android.content.Context
+import android.widget.Toast
+import com.gmail.maystruks08.domain.repository.ImageLoader
 import com.gmail.maystruks08.filmviewer.App
 import com.gmail.maystruks08.filmviewer.R
 import com.gmail.maystruks08.filmviewer.core.base.BaseFragment
-import com.gmail.maystruks08.filmviewer.core.base.FragmentToolbar
 import com.gmail.maystruks08.filmviewer.core.ext.argument
-import com.gmail.maystruks08.filmviewer.core.ext.injectViewModel
-import kotlinx.android.synthetic.main.fragment_movie_description.*
+import kotlinx.android.synthetic.main.fragment_movie.*
+import javax.inject.Inject
 
-class MovieDescriptionFragment : BaseFragment(R.layout.fragment_movie_description) {
+class MovieDescriptionFragment : BaseFragment(R.layout.fragment_movie) {
 
-    private lateinit var viewModel: MovieDescriptionViewModel
+    @Inject
+    lateinit var viewModel: MovieDescriptionViewModel
 
-    private var callback: Listener? = null
+    @Inject
+    lateinit var imageLoader: ImageLoader
 
     var movieId: Int by argument()
 
-    override fun onAttach(context: Context) {
-        super.onAttach(context)
-        callback = activity as? Listener
-    }
-
-    override fun injectDependencies() {
+    override fun inject() {
         App.movieDescriptionComponent?.inject(this)
-        viewModel = injectViewModel(viewModeFactory)
     }
-
-    override fun initToolbar() = FragmentToolbar.Builder()
-        .withId(R.id.toolbar)
-        .withTitle(R.string.app_name)
-        .withNavigationIcon(R.drawable.ic_arrow_back) { callback?.onBackClicked() }
-        .build()
 
     override fun bindViewModel() {
-        viewModel.movie.observe(viewLifecycleOwner, {
-            tvMovieName.text = it.name
-            tvMovieDescription.text = it.description
+        viewModel.movie.observe(viewLifecycleOwner, { infoView ->
+            tvMovieName.text = infoView.name
+            tvMovieDescription.text = infoView.description
+            ivMoviePicture.setImageBitmap(infoView.imageBitmap)
+        })
+
+        viewModel.progressBar.observe(viewLifecycleOwner, { needToShowProgress ->
+            if (needToShowProgress) showProgress() else hideProgress()
         })
 
         viewModel.toast.observe(viewLifecycleOwner, {
-            //TODO show on UI
+            Toast.makeText(requireContext(), it, Toast.LENGTH_SHORT).show()
         })
     }
 
     override fun initViews() {
-       viewModel.initFragment(movieId)
-    }
-
-    fun refreshUI(movieId: Int){
         viewModel.initFragment(movieId)
     }
 
-    override fun clearInjectedComponent() = App.clearMovieDescriptionComponent()
-
-
-    override fun onDetach() {
-        callback = null
-        super.onDetach()
-    }
-
-    interface Listener {
-
-        fun onBackClicked()
-
-    }
+    override fun clearComponent() = App.clearMovieDescriptionComponent()
 
     companion object {
 
-        fun getInstance(position: Int) = MovieDescriptionFragment().apply { this.movieId = position }
-
+        fun getInstance(movieId: Int) = MovieDescriptionFragment().apply {
+            this.movieId = movieId
+        }
     }
-
 }

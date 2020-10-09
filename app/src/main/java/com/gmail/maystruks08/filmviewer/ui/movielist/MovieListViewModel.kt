@@ -9,6 +9,7 @@ import com.gmail.maystruks08.domain.exception.SaveDataException
 import com.gmail.maystruks08.domain.exception.SyncWithServerException
 import com.gmail.maystruks08.domain.interactors.MovieInteractor
 import com.gmail.maystruks08.filmviewer.core.base.BaseViewModel
+import com.gmail.maystruks08.filmviewer.core.ext.SingleLiveEvent
 import com.gmail.maystruks08.filmviewer.ui.viewmodels.MovieView
 import com.gmail.maystruks08.filmviewer.ui.viewmodels.toMovieView
 import kotlinx.coroutines.Dispatchers
@@ -22,21 +23,19 @@ class MovieListViewModel @Inject constructor(
 ) : BaseViewModel() {
 
     val movieViews get(): LiveData<MutableList<MovieView>> = _movieViewsLiveData
-
     private val _movieViewsLiveData = MutableLiveData<MutableList<MovieView>>()
 
     val progressBar get(): LiveData<Boolean> = _progressBarLiveData
-
-    private val _progressBarLiveData = MutableLiveData<Boolean>()
+    private val _progressBarLiveData = SingleLiveEvent<Boolean>()
 
     init {
         loadMovieData()
     }
 
-    private fun loadMovieData(){
-        viewModelScope.launch (Dispatchers.IO) {
-            movieInteractor.provideMovieList().collect { moviesTask->
-                when(moviesTask){
+    private fun loadMovieData() {
+        viewModelScope.launch(Dispatchers.IO) {
+            movieInteractor.provideMovieList().collect { moviesTask ->
+                when (moviesTask) {
                     is ResultOfTask.Value -> handleMovies(moviesTask.value)
                     is ResultOfTask.Loading -> showLoading(true)
                     is ResultOfTask.Error -> handleError(moviesTask.error)
@@ -46,20 +45,13 @@ class MovieListViewModel @Inject constructor(
     }
 
 
-    fun refreshData(){
-
-
-    }
-
-    private fun handleMovies(movies: List<Movie>){
-        Timber.e("handleMovies ${movies.size}")
+    private fun handleMovies(movies: List<Movie>) {
         showLoading(false)
-        val moviesViews = movies.map { it.toMovieView() }.toMutableList()
+        val moviesViews =  movies.map { it.toMovieView() }.toMutableList()
         _movieViewsLiveData.postValue(moviesViews)
     }
 
-    private fun showLoading(isShow: Boolean){
-        Timber.e("showLoading ${isShow}")
+    private fun showLoading(isShow: Boolean) {
         _progressBarLiveData.postValue(isShow)
     }
 

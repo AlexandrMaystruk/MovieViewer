@@ -1,5 +1,6 @@
 package com.gmail.maystruks08.filmviewer.ui.viewmodels
 
+import android.graphics.Bitmap
 import android.os.Parcelable
 import kotlinx.android.parcel.Parcelize
 
@@ -7,7 +8,6 @@ import kotlinx.android.parcel.Parcelize
 class MovieFullInfoView(
     val id: Int,
     val name: String,
-    val imageLink: String? = null,
+    val imageBitmap: Bitmap?,
     val description: String,
-    val date: String
 ) : Parcelable

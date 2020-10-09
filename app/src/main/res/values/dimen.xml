@@ -45,4 +45,9 @@
     <dimen name="transition_m">8dp</dimen>
     <dimen name="transition_l">12dp</dimen>
 
+    <dimen name="appBarMinHeight">56dp</dimen>
+
+    <dimen name="drawerWidth">200dp</dimen>
+
+
 </resources>
